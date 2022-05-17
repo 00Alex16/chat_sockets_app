@@ -1,0 +1,71 @@
+html{
+    height: 100%;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(#3D3B8E, #6883BA);
+    background-attachment: fixed;
+}
+
+.container{
+    margin: 50px auto;
+    width: 30%;
+    padding: 30px;
+    background: #122F80;
+    border-radius: 10px;
+}
+
+.container h2{
+    margin: 0 0 30px;
+    padding: 0;
+    font-size: 30px;
+    color: #B4DDCB;
+    text-align: center;
+}
+
+.container .element label{
+    color: #fff;
+}
+
+.container .element input, select{
+    width: 100%;
+    padding: 10px 0;
+    color: #fff;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #fff;
+    margin-bottom: 30px;
+}
+
+.container .element input, select option{
+    background-color: #122F80;
+}
+
+.container .element input[type="submit"]{
+    background-color: #646A64;
+    border:none;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 15px;
+    margin-top: 30px;
+}
+
+.container .element input[type="submit"]:hover{
+    background-color: #504E5A;
+}
+
+.container .registerOption{
+    color: #fff;
+    float: right;
+}
+
+.container .registerOption a{
+    color: #fff;
+}
+
+.container .registerOption a:hover{
+    color: #B4DDCB;
+}
