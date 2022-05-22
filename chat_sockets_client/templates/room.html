@@ -4,6 +4,7 @@
 
 {% block body %}
     <div class="element">
+        <h1>{{ username }} - {{room}}</h1>
         {% if msgList %}
             {% for msg in msgList %}
                 {% if msg[0] == username %}

@@ -14,17 +14,19 @@ def login():
     if (request.method == 'POST'):
         data = {"action": "login",
                 "username": request.form["username"],
-                "password": request.form["password"]}
+                "password": request.form["password"],
+                "port": port}
         response = sendData(json.dumps(data), socketClient)
 
         if response["success"]:
             # Session permite guardar variables en la sesión de un cliente
             global username
             session["username"] = data["username"]
+            session["room"] = 'default'
             username = data["username"]
             # Se inicia hilo para recibir los mensajes de otros clientes
-            msgListening = ServerConn(socketClient, data["username"])
-            msgListening.start()
+            #msgListening = ServerConn(socketClient, data["username"])
+            #msgListening.start()
 
             return redirect(url_for('chat'))
 
@@ -55,20 +57,29 @@ def chat():
             session["username"] = username
             msg = request.get_json()["msg"]
             msgSentBy = request.get_json()["username"]
-        else:#AÑADIR HOVER A MSG
+        else:
             msg = request.form['message']
             data = {"action": "sendMsg",
                     "username": session["username"],
                     "msg": msg,}
-            response = sendData(json.dumps(data), socketClient)
             msgSentBy = data["username"]
+            if msg:
+                response = sendData(json.dumps(data), socketClient)
+                print("ANTES CONDS", response)
+                if (response["action"] == "msgResult"):
+                    print("MSG",response)
+                elif (response["action"] == "commandResult"):
+                    session["room"] = response["room"]
+                    msg = response["message"]
+                    msgSentBy = "Sistema"
+                    print("COMMAND",response)
             
     if not msgHistory:
         msgHistory = []
     if msg and msgSentBy:
         msgHistory.append([msgSentBy, msg])
-    print(msgHistory)
-    return render_template("room.html", msgList=msgHistory, username=session["username"])
+    print(msgHistory, session["room"])
+    return render_template("room.html", msgList=msgHistory, username=session["username"], room=session["room"])
 
 @app.route("/closeSession", methods=['POST', 'GET'])
 def closeSession():
@@ -87,9 +98,8 @@ def closeSession():
 
 if __name__ == "__main__":
     # Socket que se utiliza en el lado del cliente
-    addr = "localhost"
-    port = 8001
+    port = '5001'
     socketClient = socket.socket()
-    socketClient.connect((addr, port))
+    socketClient.connect(("localhost", 8001))
 
-    app.run(debug=False, port='5001')
+    app.run(debug=False, port=port)

@@ -1,6 +1,8 @@
 class Command():
   def __init__(self):
-    self.commands = ['#cR', '#gR', '#eR', 'lR', 'dR', 'show users', '\private']
+    self.commandsArgument = ['cR', 'gR', 'dR']
+    self.commandsNoArgument = ['eR', 'lR']
+    self.otherCommands = ['\private', 'show users']
   
   def getKeyword(self, command):
     keyword = ''
@@ -9,8 +11,24 @@ class Command():
         keyword += i
       else:
         break
-    return keyword
+    return keyword.replace('#', '')
   
+  def getMsg(self, command):
+    argument = ''
+    msg = ''
+    flag = False
+    for i in command:
+      if (i == ' '):
+        flag = True
+      if flag:
+        msg += i
+      else:
+        argument += i
+    argument = argument.replace(' ', '')
+    msg = msg[1:]
+  
+    return [argument, msg]
+
   def getArgument(self, command):
     argument = ''
     flag = False
@@ -19,7 +37,7 @@ class Command():
         flag = True
       if flag:
         argument += i
-    return argument.replace(' ', '')
+    return self.getMsg(argument[1:])[0]
   
   def getMsgToSend(self, command):
     msg = ''
@@ -32,32 +50,21 @@ class Command():
     return msg
 
   def verifyCommand(self, command):
-    # Falta hacer más validaciones
-    if self.getKeyword(command) in self.commands and len(self.getArgument(command)) > 0:
-      return True
+    keyword = self.getKeyword(command)
+    if (keyword in self.commandsArgument):
+      if len(self.getArgument(command)) > 0:
+        return True
     
-  def cRCommand(self, argument):
-    roomName = argument
-    return roomName
+    elif (keyword in self.commandsNoArgument):
+      if len(self.getArgument(command)) == 0:
+        return True
 
-  def gRCommand(self, argument):
-    roomName = argument
-    return roomName
+    elif (command == 'show users'):
+      return True
 
-  def eRCommand(self):
-    pass
-
-  def lRCommand(self):
-    pass
-
-  def dRCommand(self):
-    pass
-
-  def exitCommand(self):
-    pass
-
-  def showUsersCommand(self):
-    pass
-
-  def privateCommand(self):
-    pass
+    elif (keyword == '\private'):
+      if len(self.getArgument(command)) > 0 and len(self.getMsg) > 0:
+        return True
+    
+    else:
+      return False

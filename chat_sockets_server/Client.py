@@ -1,6 +1,6 @@
 from Command import Command
 from Database import Database
-import threading, json
+import threading, json, requests
 
 class Client(threading.Thread):
   clients = []
@@ -11,8 +11,10 @@ class Client(threading.Thread):
     self.addressClient = addressClient
     self.rooms = ['default']
     self.ownRooms = ['default']
-    self.room = self.rooms[len(self.rooms)-1]
+    # Hay que cambiar la lógica de self.room
+    self.room = 'default'
     self.username = ''
+    self.port = ''
 
   @staticmethod
   def closeSocket(username):
@@ -25,11 +27,12 @@ class Client(threading.Thread):
   @staticmethod
   def sendMsgUsers(username, msg, room):
     for client in Client.clients:
-      if client.room == room:
+      if client.getRoom() == room and client.username != username:
         data = {"action": "sendMsg",
                 "username": username,
                 "msg": msg}
-        client.socketClient.send(json.dumps(data).encode('utf8'))
+        requests.post('http://127.0.0.1:' + client.port + '/chat', json=data)
+        #client.socketClient.send(json.dumps(data).encode('utf8'))
 
   @staticmethod
   def getRooms():
@@ -44,8 +47,9 @@ class Client(threading.Thread):
     nClientsInRooms = {}
     for room in rooms:
       counter = 0
+      nClientsInRooms[room] = counter
       for client in Client.clients:
-        if client.room == room:
+        if client.getRoom() == room:
           counter += 1
           nClientsInRooms[room] = counter
     return nClientsInRooms
@@ -66,50 +70,61 @@ class Client(threading.Thread):
                 "msg": msg}
         client.socketClient.send(json.dumps(data).encode('utf8'))
 
+  def getRoom(self):
+    return self.rooms[len(self.rooms)-1]
+
   def changeRoom(self, argument):
     result = {}
     if argument not in self.getRooms():
-      result = {"message": "La sala no existe", "room": self.room}
+      result = {"action":"commandResult", "message": "La sala no existe", "room": self.getRoom()}
       return result
-    if argument == self.room:
-      result = {"message": "Ya se encuentra en la sala", "room": self.room}
+    if argument == self.getRoom():
+      result = {"action":"commandResult", "message": "Ya se encuentra en la sala", "room": self.getRoom()}
       return result
     if argument in self.rooms:
       # Para colocar a la sala en la última posición
       self.rooms.remove(argument)
       self.rooms.append(argument)
     else:
+      # En caso de que la sala no sea del mismo cliente
       self.room = argument    # PUEDE LLEGAR A DAR PROBLEMAS ESTA LÓGICA
-    result = {"message": "Ha cambiado de sala", "room": self.room}
+    result = {"action":"commandResult", "message": "Ha cambiado de sala", "room": self.getRoom()}
+    print("result")
     return result
 
   def executeCommand(self, command):
     # El comando de exit está implementado en un botón
+    print("Entre al command antes con request: ", command)
     commandUtils = Command()
     keyword = commandUtils.getKeyword(command)
     argument = commandUtils.getArgument(command)
+    print("Entre al command despues con request: ", command)
+    print(keyword, argument)
 
     if commandUtils.verifyCommand(command):
       if keyword == 'cR':
+        print("Entre al command server con request: ", command)
         self.rooms.append(argument)
-        result = {"message": "Se creó la sala correctamente", "room": self.room}
+        result = {"action":"commandResult", "message": "Se creó la sala correctamente.", "room": self.getRoom()}
         return result
-
+      
       if keyword == 'gR':
         return self.changeRoom(argument)
       
       if keyword == 'eR':
+        print("Entre al eR")
         return self.changeRoom('default')
       
-      if keyword == 'lR':
+      if keyword == 'lR': # Este comando se puede implementar como un botón que levante un modal
         clientsInRooms = self.numberClientsInRooms(self.getRooms())
-        result = {"message": "Lista de salas y cantidad de participantes en cada una",
-                  "data": clientsInRooms}
+        result = {"action":"commandResult", "data": clientsInRooms,
+                  "message": "Lista de salas y cantidad de participantes en cada una",
+                  "room": self.getRoom()}
         return result
 
       if keyword == 'dR':
         if argument == 'default' or argument not in self.rooms:
-          result = {"message": "No puedes borrar esta sala", "room": self.room}
+          result = {"action":"commandResult", "message": "No puedes borrar esta sala", "room": self.getRoom()}
           return result
         else:
           self.rooms.remove(argument)
@@ -150,7 +165,7 @@ class Client(threading.Thread):
     return json.dumps(data).encode('utf8')
 
   def run(self):
-    print(f"Nueva conexión del cliente: {self.addressClient}")
+    print(f"Nueva conexión del cliente: {self.addressClient, self.socketClient}")
     while Client.clients:
       try:
         request = json.loads(self.socketClient.recv(1024).decode('utf8'))
@@ -169,8 +184,9 @@ class Client(threading.Thread):
         elif (request["action"] == 'login'):
           if self.userExists(request["username"]):
             if self.login(request):
-              # Se almacena nombre de usuario en el objeto cliente
+              # Se almacena nombre de usuario y port en el objeto cliente
               self.username = request["username"]
+              self.port = request["port"]
               response = {"message": "Usuario logueado correctamente", "success": True}
               self.socketClient.send(self.formatData(response))
             else:
@@ -182,10 +198,12 @@ class Client(threading.Thread):
 
         elif (request["action"] == 'sendMsg'):
           if (request["msg"][0] == '#'):
-            self.executeCommand(request["msg"])
+            print("Entre al server con request: ", request)
+            response = self.executeCommand(request["msg"])
+            self.socketClient.send(self.formatData(response))
           else:
-            self.sendMsgUsers(request["username"], request["msg"], self.room)
-            response = {"message": "Mensaje enviado", "room": self.room}
+            self.sendMsgUsers(request["username"], request["msg"], self.getRoom())
+            response = {"action": "msgResult", "message": "Mensaje enviado", "room": self.getRoom()}
             self.socketClient.send(self.formatData(response))
         
         elif (request["action"] == 'close'):
