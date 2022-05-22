@@ -69,3 +69,25 @@ body{
 .container .registerOption a:hover{
     color: #B4DDCB;
 }
+
+.msg {
+    font-family: Century Gothic,CenturyGothic,AppleGothic,sans-serif; 
+    color: #000; 
+    font-size: 16px;
+    background: #9db3eb;
+    padding: 1px; 
+    border-radius: 25px 0px 25px 0px;
+    border: 3px solid #132551;
+    margin-left: 20%;
+    margin-right: 20%;
+    overflow:hidden;
+}
+
+.msg:hover p {
+    background: #7293e6;
+}
+
+.msg p {
+    padding: 1px;
+    margin: 0;
+}

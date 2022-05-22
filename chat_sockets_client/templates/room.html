@@ -1,0 +1,42 @@
+{% extends './template.html' %}
+
+{% block title %}Sala de chat{% endblock %}
+
+{% block body %}
+    <div class="element">
+        {% if msgList %}
+            {% for msg in msgList %}
+                {% if msg[0] == username %}
+                    <div style="text-align: right;" class="msg">
+                        <p style="color: #56275c;">
+                            <b>{{ msg[0] }}<p>{{ msg[1] }}</p></b>
+                        </p>
+                    </div>
+                {% else %}
+                    <div style="text-align: left;" class="msg">
+                        <p style="color: #56275c;">
+                            <b>{{ msg[0] }}<p>{{ msg[1] }}</p></b>
+                        </p>
+                    </div>
+                {% endif %}
+                <br/>
+            {% endfor %}
+        {% endif %}
+        <form method="post">
+            <div class="container">
+                <input 
+                    type="text" 
+                    name="message" 
+                    autocomplete="off" 
+                    autofocus 
+                    placeholder="Escribe aquí tus mensajes..."
+                >
+                <input type="submit" hidden>
+                <button type="submit">Refrescar chat</button>
+                <button type="submit" formaction="{{ url_for('closeSession') }}">
+                    Salir de la aplicación
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
