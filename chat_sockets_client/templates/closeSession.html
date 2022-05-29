@@ -1,9 +1,10 @@
 {% extends './template.html' %}
 
-{% block title %}Sala de chat{% endblock %}
+{% block title %}Cierre de sesión{% endblock %}
 
 {% block body %}
-    <div class="element">
-        <h1>Adios</h1>
+    <div class="goodbye">
+        <h1>Vuelve pronto, {{ username }}!</h1>
+        <img src="../static/images/goodbye.png" width="250px" height="250px"/>
     </div>
 {% endblock %}

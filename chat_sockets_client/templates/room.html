@@ -3,9 +3,9 @@
 {% block title %}Sala de chat{% endblock %}
 
 {% block body %}
-    <div class="element">
-        <h1>{{ username }} - {{room}}</h1>
+    <div>
         {% if msgList %}
+        {% autoescape false %}
             {% for msg in msgList %}
                 {% if msg[0] == username %}
                     <div style="text-align: right;" class="msg">
@@ -22,21 +22,30 @@
                 {% endif %}
                 <br/>
             {% endfor %}
+        {% endautoescape %}
         {% endif %}
+        <form id="closeAppForm" action="{{ url_for('closeSession') }}" method="post"></form>
         <form method="post">
-            <div class="container">
-                <input 
-                    type="text" 
-                    name="message" 
-                    autocomplete="off" 
-                    autofocus 
-                    placeholder="Escribe aquí tus mensajes..."
-                >
-                <input type="submit" hidden>
+            <div class="clientInfo">
+                <img src="{{ imgUrl }}" width="100px" height="100px"/>
+                <b><p>Usuario: {{ username }}</p></b>
+                <b><p>Sala: {{room}}</p></b>
                 <button type="submit">Refrescar chat</button>
-                <button type="submit" formaction="{{ url_for('closeSession') }}">
+                <br/>
+                <button type="submit" form="closeAppForm">
                     Salir de la aplicación
                 </button>
+            </div>
+
+            <div class="chatBox">
+                    <input 
+                        type="text" 
+                        name="message" 
+                        autocomplete="off" 
+                        autofocus 
+                        placeholder="Escribe aquí tus mensajes..."
+                    >
+                    <input type="submit" hidden>
             </div>
         </form>
     </div>

@@ -78,9 +78,9 @@ body{
     padding: 1px; 
     border-radius: 25px 0px 25px 0px;
     border: 3px solid #132551;
-    margin-left: 20%;
-    margin-right: 20%;
-    overflow:hidden;
+    margin-left: 30%;
+    margin-right: 10%;
+    overflow: hidden;
 }
 
 .msg:hover p {
@@ -90,4 +90,73 @@ body{
 .msg p {
     padding: 1px;
     margin: 0;
+}
+
+.chatBox {
+    margin-left: 30%;
+    margin-right: 10%;
+    overflow: hidden;
+}
+
+.chatBox input {
+    width: 100%;
+    padding: 10px;
+    color: white;
+    background: #122F80;
+    border: 5px double white;
+}
+
+.chatBox input:focus {
+    outline-color: #9db4f6;
+}
+
+.chatBox input::placeholder {
+    color: white;
+}
+
+.clientInfo {
+    position: fixed; 
+    top: 20%; 
+    bottom: 80%;
+    margin-left: 5%; 
+    text-align: center;
+}
+
+.clientInfo button {
+    background-color: #646A64;
+    cursor: pointer;
+    padding: 8px;
+    display: block; 
+    margin: 0 auto;
+}
+
+.clientInfo button:hover {
+    background-color: #504E5A;
+}
+
+.goodbye {
+    margin-top: 10%;
+    display: block;
+    justify-content: center;
+    text-align: center;
+}
+
+.goodbye img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.alertError {
+    padding: 20px;
+    background-color: #f44336;
+    color: white;
+    margin-bottom: 15px;
+}
+
+.alertSuccess {
+    padding: 20px;
+    background-color: #16c36f;
+    color: white;
+    margin-bottom: 15px;
 }
