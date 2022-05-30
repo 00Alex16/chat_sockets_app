@@ -1,6 +1,6 @@
 from Command import Command
 from Database import Database
-import threading, json, requests
+import threading, json
 
 class Client(threading.Thread):
   clients = []
@@ -30,9 +30,8 @@ class Client(threading.Thread):
       if client.getRoom() == room and client.username != username:
         data = {"action": "sendMsg",
                 "username": username,
-                "msg": msg}
-        requests.post('http://127.0.0.1:' + client.port + '/chat', json=data)
-        #client.socketClient.send(json.dumps(data).encode('utf8'))
+                "message": msg}
+        client.socketClient.send(json.dumps(data).encode('utf8'))
 
   # Se pasa a los clientes que están en determinada sala a la sala por defecto y se les notifica
   @staticmethod  
@@ -42,9 +41,9 @@ class Client(threading.Thread):
       if client.getRoom() == room and client.username != username:
         data = {"action": "changeRoom",
                 "username": username,
-                "msg": msg}
+                "message": msg}
         client.setRoom('default')
-        requests.post('http://127.0.0.1:' + client.port + '/chat', json=data)
+        client.socketClient.send(json.dumps(data).encode('utf8'))
 
   # Se retornan todas las salas activas en el servidor
   @staticmethod
@@ -83,8 +82,8 @@ class Client(threading.Thread):
       if client.username == usernameDestination:
         data = {"action": "sendMsg",
                 "username": usernameOrigin,
-                "msg": '<span style="color:#3b0343"><u>Susurro</u>:</span> ' + msg}
-        requests.post('http://127.0.0.1:' + client.port + '/chat', json=data)
+                "message": '<span style="color:#3b0343"><u>Susurro</u>:</span> ' + msg}
+        client.socketClient.send(json.dumps(data).encode('utf8'))
         return
 
   def getRoom(self):
@@ -234,7 +233,7 @@ class Client(threading.Thread):
 
   # Método principal para ejecutar un hilo por cada cliente en el servidor
   def run(self):
-    print(f"Nueva conexión del cliente: {self.addressClient}")
+    print(f"Nueva conexión del cliente: {self.addressClient, self.addressClient[0], self.addressClient[1]}")
     while Client.clients:
       try:
         request = json.loads(self.socketClient.recv(1024).decode('utf8'))
@@ -275,11 +274,11 @@ class Client(threading.Thread):
             self.socketClient.send(self.formatData(response))
           else:
             self.sendMsgUsers(request["username"], request["msg"], self.getRoom())
-            response = {"action": "msgResult", "message": "Mensaje enviado", "room": self.getRoom()}
-            self.socketClient.send(self.formatData(response))
+            #response = {"action": "msgResult", "message": "Mensaje enviado", "room": self.getRoom()}
+            #self.socketClient.send(self.formatData(response))
         
         elif (request["action"] == 'close'):
-          response = {"message": "Sesión terminada"}
+          response = {"action": "close", "message": "Sesión terminada"}
           self.socketClient.send(self.formatData(response))
           self.closeSocket(self.username)
           break

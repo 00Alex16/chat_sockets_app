@@ -1,17 +1,21 @@
 from utils.socketClient import sendData
 from utils.ServerConn import ServerConn
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, flash
 import json, socket
 
 app = Flask(__name__)
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'    # Secret key para poder usar session
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'    # Secret key para poder usar session y flash
 
 # Variables globales
 msgHistory = None
 username = None
+imgUrl = None
+room = None
 
 @app.route("/", methods=['POST', 'GET'])
 def login():
+    global imgUrl, room
+
     if (request.method == 'POST'):
         data = {"action": "login",
                 "username": request.form["username"],
@@ -21,14 +25,19 @@ def login():
 
         if response["success"]:
             # Session permite guardar variables en la sesión de un cliente
+            # En vez de session se usaron variables globales
             global username
             if response["gender"] == 'male':
-                session["imgUrl"] = '../static/images/male-icon.png'
+                imgUrl = '../static/images/male-icon.png'
             else:
-                session["imgUrl"] = '../static/images/female-icon.png'
-            session["username"] = data["username"]
-            session["room"] = 'default'
+                imgUrl = '../static/images/female-icon.png'
+            room = 'default'
             username = data["username"]
+
+            # Se inicia hilo que va a estar escuchando las respuestas del servidor en el chat
+            msgListening = ServerConn(socketClient, data["username"])
+            msgListening.start()
+
             return redirect(url_for('chat'))
         else:
             # flash permite guardar mensajes de retroalimentación en el siguiente request
@@ -58,60 +67,60 @@ def register():
 @app.route("/chat", methods=['POST', 'GET'])
 def chat():
     # Variables que se usan en el transcurso del chat
-    global msgHistory
+    global msgHistory, imgUrl, room, username
     msg = ''
     msgSentBy = ''
 
     if (request.method == 'POST'):
         if (request.is_json):
-            # Este tipo de request se recibe directamente del servidor
+            # Se reciben las requests desde el hilo msgListening
+            if request.get_json()["action"] == 'sendMsg':
+                msgSentBy = request.get_json()["username"]
+                msg = request.get_json()["message"]
+
             if request.get_json()["action"] == 'changeRoom':
-                session["room"] = 'default'
-            session["username"] = username
-            msg = request.get_json()["msg"]
-            msgSentBy = request.get_json()["username"]
+                msgSentBy = request.get_json()["username"]
+                msg = request.get_json()["message"]
+                room = 'default'
+
+            if request.get_json()["action"] == 'commandResult':
+                msgSentBy = 'Sistema'
+                msg = request.get_json()["message"]
+                room = request.get_json()["room"]
         else:
             # En caso contrario es el request desde el form
             msg = request.form['message']
             data = {"action": "sendMsg",
-                    "username": session["username"],
+                    "username": username,
                     "msg": msg,}
             msgSentBy = data["username"]
             if msg:
-                response = sendData(json.dumps(data), socketClient)
-                if (response["action"] == "commandResult"):
-                    session["room"] = response["room"]
-                    msg = response["message"]
-                    msgSentBy = "Sistema"
+                socketClient.send(json.dumps(data).encode('utf8'))
+                if msg[0] == '#':
+                    msg = ''
             
     if not msgHistory:
         msgHistory = []
         msgHistory.append(['Sistema', 'Puedes escribir #help para ver los comandos disponibles'])
     if msg and msgSentBy:
         msgHistory.append([msgSentBy, msg])
-    return render_template("room.html", msgList=msgHistory, username=session["username"], 
-                            room=session["room"], imgUrl=session["imgUrl"])
+    return render_template("room.html", msgList=msgHistory, username=username, 
+                            room=room, imgUrl=imgUrl)
 
 @app.route("/closeSession", methods=['POST', 'GET'])
 def closeSession():
-    global username, msgHistory
-    user = username
+    global username
 
     data = {"action": "close"}
-    response = sendData(json.dumps(data), socketClient)
-    
-    # Se limpia la información en la sesión del cliente
-    session.clear()
-    username = None
-    msgHistory = None
+    socketClient.send(json.dumps(data).encode('utf8'))
 
-    socketClient.close()
-    return render_template("closeSession.html", username=user)
+    return render_template("closeSession.html", username=username)
 
 if __name__ == "__main__":
     port = '5001'
     # Socket que se utiliza en el lado del cliente
     socketClient = socket.socket()
-    socketClient.connect(("localhost", 8001))
+    # Información para conectarse al servidor remoto
+    socketClient.connect(("34.125.209.94", 3389))
 
     app.run(debug=False, port=port)

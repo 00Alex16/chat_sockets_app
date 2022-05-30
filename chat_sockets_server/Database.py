@@ -4,10 +4,10 @@ class Database():
     def __init__(self):
         self.db = mysql.connector.connect(
             # Datos para conectarse a la BD
-            host="localhost",
-            user="root",
-            password="",
-            database="db_chat_app"
+            host="db4free.net",
+            user="jalex_bd",
+            password="db_chat_app_pass",
+            database="db_chat_app_sock"
         )
         self.cursor = self.db.cursor()
     

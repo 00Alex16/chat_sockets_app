@@ -2,7 +2,8 @@ from Client import Client
 import socket
 
 server = socket.socket()
-server.bind(("localhost", 8001))
+# En caso de ejecutar el servidor localmente usar 'localhost', 8001
+server.bind(("", 3389))
 server.listen(5)
 print ("####### Servidor para el chat iniciado #######")
 
